@@ -1,0 +1,3 @@
+- insert:
+    - id: sidebar-studio
+      name: '@local/dsh-sidebar-studio'
