@@ -1,13 +1,15 @@
-/* Sidebar Studio v2 — 左侧栏工作台：入口显隐 + 两条横条拉伸（入口区 / 底部动作区）。 */
+/* Left Sidebar Tuner v2 — 左侧栏优化：入口显隐 + 两条横条拉伸（入口区 / 底部动作区）。 */
 window.__ModuleLoader__.load({
-  id: '@local/dsh-sidebar-studio',
+  id: 'dsh-sidebar-tuner',
   factory(require) {
     'use strict'
     const React = require('react')
     const h = React.createElement
-    const NS = 'sidebarStudio'
-    const PANEL_ID = 'sidebar-studio'
-    const PREFS_KEY = 'dsh-sidebar-studio:prefs:v2'
+    const NS = 'sidebarTuner'
+    const PANEL_ID = 'sidebar-tuner'
+    const PREFS_KEY = 'dsh-sidebar-tuner:prefs:v2'
+    // 旧包名下的偏好键。v2.1.0 改名时保留迁移，老用户装新版不丢开关与高度。
+    const LEGACY_PREFS_KEYS = ['dsh-sidebar-studio:prefs:v2']
     // schema 3 = 本版语义（两条横条：nav / footerActions）。
     // 读到别的 schema 一律丢弃高度、只保留入口显隐 —— 旧版把「第一段高度」写进同一个键，
     // 照读会把入口区钉死、工作区压没。这条隔离是上一轮「全乱套」的直接教训。
@@ -26,7 +28,7 @@ window.__ModuleLoader__.load({
 
     const DICTS = {
       zh: {
-        'panel.label': '侧栏工作台', 'panel.title': '左侧栏工作台',
+        'panel.label': '左侧栏优化', 'panel.title': '左侧栏优化',
         'panel.desc': '管理左侧栏入口的显示与隐藏，并拖动两条横条调整入口区与底部动作区的高度。偏好只保存在本机。',
         'entries.title': '面板入口',
         'entries.desc': '关掉的入口仍可从「更多」菜单打开。',
@@ -39,12 +41,12 @@ window.__ModuleLoader__.load({
         'layout.auto': '自动', 'layout.custom': '自定义',
         'layout.narrower': '减少 16 px', 'layout.wider': '增加 16 px', 'layout.resetOne': '恢复自动',
         'layout.reset': '恢复默认布局', 'layout.resetDone': '已恢复默认布局。',
-        'menu.section': '面板入口', 'menu.manage': '管理侧栏与布局…',
-        'settings.label': '侧栏工作台', 'settings.hint': '入口显示与区域尺寸共用同一份本机偏好。',
+        'menu.section': '面板入口', 'menu.manage': '优化侧栏与布局…',
+        'settings.label': '左侧栏优化', 'settings.hint': '入口显示与区域尺寸共用同一份本机偏好。',
         'panel.note': '「插件」入口由宿主固定显示。头像行是宿主原装的，本插件不写它。整栏宽度请直接拖侧栏右边缘。',
       },
       en: {
-        'panel.label': 'Sidebar studio', 'panel.title': 'Sidebar studio',
+        'panel.label': 'Left Sidebar Tuner', 'panel.title': 'Left Sidebar Tuner',
         'panel.desc': 'Show or hide sidebar entries, and drag two bars to resize the entry area and the footer actions. Preferences stay on this machine.',
         'entries.title': 'Panel entries',
         'entries.desc': 'Hidden entries stay reachable from the More menu.',
@@ -58,7 +60,7 @@ window.__ModuleLoader__.load({
         'layout.narrower': 'Shrink by 16 px', 'layout.wider': 'Grow by 16 px', 'layout.resetOne': 'Restore automatic',
         'layout.reset': 'Reset layout', 'layout.resetDone': 'Default layout restored.',
         'menu.section': 'Panel entries', 'menu.manage': 'Manage sidebar and layout…',
-        'settings.label': 'Sidebar studio', 'settings.hint': 'Entry and region preferences are saved locally.',
+        'settings.label': 'Left Sidebar Tuner', 'settings.hint': 'Entry and region preferences are saved locally.',
         'panel.note': 'Plugins is fixed by the host. The avatar row is shipped as-is and this plugin never styles it. Drag the sidebar edge for column width.',
       },
     }
@@ -70,8 +72,23 @@ window.__ModuleLoader__.load({
       if (value === null || value === undefined || !Number.isFinite(value)) return null
       return Math.max(0, Math.round(Math.min(MAX_HEIGHT, value)))
     }
+    // 改名迁移：新键为空时，把旧键的值搬过来并删掉旧键。
+    // 只在「新键确实没有值」时搬，避免把用户在新版里的最新选择覆盖回旧值。
+    function migrateLegacyPreferences() {
+      try {
+        if (window.localStorage.getItem(PREFS_KEY) != null) return
+        for (const legacyKey of LEGACY_PREFS_KEYS) {
+          const raw = window.localStorage.getItem(legacyKey)
+          if (raw == null) continue
+          window.localStorage.setItem(PREFS_KEY, raw)
+          window.localStorage.removeItem(legacyKey)
+          return
+        }
+      } catch (_) {}
+    }
     function readPreferences() {
       try {
+        migrateLegacyPreferences()
         const raw = window.localStorage.getItem(PREFS_KEY)
         const value = raw ? JSON.parse(raw) : null
         if (!value || typeof value !== 'object') return { ...DEFAULTS }
@@ -638,19 +655,19 @@ body.dst-resizing{user-select:none!important;cursor:row-resize!important}body.ds
 
     function apply(ctx) {
       const t = ctx.locale.bind(NS)
-      ctx.effect(() => ctx.locale.register(NS, DICTS), 'sidebar-studio: locale')
+      ctx.effect(() => ctx.locale.register(NS, DICTS), 'sidebar-tuner: locale')
       ctx.effect(() => {
         const style = document.createElement('style')
-        style.dataset.pluginCss = '@local/dsh-sidebar-studio/styles'
+        style.dataset.pluginCss = 'dsh-sidebar-tuner/styles'
         style.textContent = CSS
         document.head.append(style)
         return () => style.remove()
-      }, 'sidebar-studio: styles')
-      ctx.effect(() => attachPins(ctx), 'sidebar-studio: entry visibility')
+      }, 'sidebar-tuner: styles')
+      ctx.effect(() => attachPins(ctx), 'sidebar-tuner: entry visibility')
       ctx.effect(() => {
         resizeHandle = installResize()
         return () => { resizeHandle?.dispose(); resizeHandle = null }
-      }, 'sidebar-studio: region resize')
+      }, 'sidebar-tuner: region resize')
       ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: PANEL_ID, order: 20, label: () => t('panel.label'), locale: NS }, EntryGlyph))
       ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID, locale: NS }, makePanel(ctx, t)))
       try {
@@ -658,6 +675,6 @@ body.dst-resizing{user-select:none!important;cursor:row-resize!important}body.ds
       } catch (_) {}
       ctx.slots.inject('settings.section', () => ctx.slots.register({ name: 'settings.section', id: PANEL_ID, order: 25, label: () => t('settings.label'), locale: NS }, makePanel(ctx, t, 'settings')))
     }
-    return { name: 'sidebar-studio', inject: ['slots', 'locale', 'layout'], apply }
+    return { name: 'sidebar-tuner', inject: ['slots', 'locale', 'layout'], apply }
   },
 })

@@ -1,11 +1,26 @@
 {
-  "name": "@local/dsh-sidebar-studio",
-  "version": "2.0.0",
-  "private": true,
+  "name": "dsh-sidebar-tuner",
+  "version": "2.1.0",
   "type": "module",
-  "description": "DSH 左侧栏工作台：入口显隐、入口区与底部动作区两条横条拉伸。",
+  "description": "DSH 左侧栏优化：入口显隐、入口区与底部动作区两条横条拉伸。",
   "icon": "./icon.svg",
   "license": "MIT",
+  "author": "irun1025",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "sidebar",
+    "layout",
+    "ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/irun1025/dsh-sidebar-tuner.git"
+  },
+  "homepage": "https://github.com/irun1025/dsh-sidebar-tuner#readme",
+  "bugs": {
+    "url": "https://github.com/irun1025/dsh-sidebar-tuner/issues"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -19,8 +34,12 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "dsh": ">=0.2.0-rc.2 <0.3.0-0"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
